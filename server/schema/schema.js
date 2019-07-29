@@ -1,3 +1,4 @@
+/* eslint-disable no-use-before-define */
 // dummy data
 const books = [
   {
@@ -18,6 +19,24 @@ const books = [
     id: '3',
     author_id: '3',
   },
+  {
+    name: 'The Hero of Ages',
+    genre: 'Fantasy',
+    id: '4',
+    author_id: '2',
+  },
+  {
+    name: 'The Colour of Magic',
+    genre: 'Fantasy',
+    id: '5',
+    author_id: '3',
+  },
+  {
+    name: 'The Light Fantastic',
+    genre: 'Fantasy',
+    id: '6',
+    author_id: '3',
+  },
 ];
 const authors = [
   { name: 'Patrick Rothfuss', age: 44, id: '1' },
@@ -26,7 +45,6 @@ const authors = [
 ];
 
 const graphql = require('graphql');
-const find = require('lodash.find');
 
 const {
   GraphQLObjectType,
@@ -34,6 +52,7 @@ const {
   GraphQLSchema,
   GraphQLID,
   GraphQLInt,
+  GraphQLList,
 } = graphql;
 
 const AuthorType = new GraphQLObjectType({
@@ -42,6 +61,12 @@ const AuthorType = new GraphQLObjectType({
     id: { type: GraphQLID },
     name: { type: GraphQLString },
     age: { type: GraphQLInt },
+    books: {
+      type: new GraphQLList(BookType),
+      resolve(parent) {
+        return books.filter(book => book.author_id === parent.id);
+      },
+    },
   }),
 });
 
@@ -54,7 +79,8 @@ const BookType = new GraphQLObjectType({
     author: {
       type: AuthorType,
       resolve(parent) {
-        return find(authors, { id: parent.author_id });
+        const result = authors.filter(author => author.id === parent.author_id);
+        return result[0] ? result[0] : null;
       },
     },
   }),
@@ -67,14 +93,28 @@ const RootQuery = new GraphQLObjectType({
       type: BookType,
       args: { id: { type: GraphQLID } },
       resolve(parent, args) {
-        return find(books, { id: args.id });
+        const result = books.filter(book => book.id === args.id);
+        return result[0] ? result[0] : null;
       },
     },
     author: {
       type: AuthorType,
       args: { id: { type: GraphQLID } },
       resolve(parent, args) {
-        return find(authors, { id: args.id });
+        const result = authors.filter(author => author.id === args.id);
+        return result[0] ? result[0] : null;
+      },
+    },
+    books: {
+      type: new GraphQLList(BookType),
+      resolve() {
+        return books;
+      },
+    },
+    authors: {
+      type: new GraphQLList(AuthorType),
+      resolve() {
+        return authors;
       },
     },
   },
