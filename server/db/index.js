@@ -48,30 +48,7 @@ async function initializeTables() {
   }
 }
 
-function getAll(table) {
-  return knex(table).select('*');
-}
-
-function getByName(table, name) {
-  return knex(table).select('*').where('name', name);
-}
-
-function getById(table, id) {
-  return knex(table).select('*').where('id', id);
-}
-
-function insertOne(table, record, returning = []) {
-  if (returning.length > 0) {
-    return knex(table).returning(returning).insert(record);
-  }
-
-  return knex(table).insert(record);
-}
-
 module.exports = {
   initializeTables,
-  getByName,
-  getById,
-  getAll,
-  insertOne,
+  knex,
 };

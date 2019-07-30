@@ -12,6 +12,7 @@ app.use('/graphql', graphqlHTTP({
   schema,
   graphiql: true,
 }));
+
 app.listen(PORT, () => {
   // eslint-disable-next-line no-console
   console.log(`Server listening on port ${PORT}`);
