@@ -4,6 +4,9 @@ const graphqlHTTP = require('express-graphql');
 const schema = require('./schema/schema');
 
 const app = express();
+const { initializeTables } = require('./db');
+
+initializeTables();
 
 app.use('/graphql', graphqlHTTP({
   schema,
