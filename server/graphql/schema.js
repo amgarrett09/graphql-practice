@@ -19,10 +19,10 @@ const typeDefs = gql`
   }
 
   type Query {
-    movie(title: String): Movie
-    director(name: String): Director
-    movies: [Movie]
-    directors: [Director]
+    movie(title: String, id:ID): Movie
+    director(name: String, id: ID): Director
+    movies(page: Int!): [Movie]
+    directors(page: Int!): [Director]
   }
 `;
 
@@ -48,26 +48,48 @@ const resolvers = {
       };
     },
     async director(_, args) {
-      const result = await knex
-        .select('*')
-        .from('directors')
-        .where('name', args.name)
-        .catch(() => []);
+      if (args.name) {
+        const result = await knex
+          .select('*')
+          .from('directors')
+          .where('name', args.name)
+          .catch(() => []);
 
-      if (result.length === 0) return null;
+        return result[0] ? result[0] : null;
+      }
 
-      return result[0];
+      if (args.id) {
+        const result = await knex
+          .select('*')
+          .from('directors')
+          .where('id', args.id)
+          .catch(() => []);
+
+        return result[0] ? result[0] : null;
+      }
+
+      return null;
     },
-    async movies() {
+    async movies(_, args) {
+      if (args.page < 1) return null;
+
+      const offset = args.page - 1;
       const result = await knex('movies')
         .select('*')
+        .limit(20)
+        .offset(offset * 20)
         .catch(() => []);
 
       return result;
     },
-    async directors() {
+    async directors(_, args) {
+      if (args.page < 1) return null;
+
+      const offset = args.page - 1;
       const result = await knex('directors')
         .select('*')
+        .limit(20)
+        .offset(offset * 20)
         .catch(() => []);
 
       return result;
