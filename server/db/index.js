@@ -1,4 +1,4 @@
-const knex = require('knex')({
+const knexInstance = require('knex')({
   client: 'pg',
   connection: {
     host: 'localhost',
@@ -8,47 +8,42 @@ const knex = require('knex')({
   },
 });
 
-async function initializeTables() {
-  // author
-  let exists = await knex.schema.hasTable('authors');
-
+async function initializeDirectors(knex) {
+  const exists = await knex.schema.hasTable('directors');
   if (!exists) {
-    try {
-      await knex.raw(`
-        CREATE TABLE authors (
-          id UUID NOT NULL PRIMARY KEY DEFAULT uuid_generate_v4(),
-          name VARCHAR(200) NOT NULL,
-          age INT,
-          UNIQUE(name, age)
-        ) 
-      `);
-      console.log('authors table created');
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  // books
-  exists = await knex.schema.hasTable('books');
-  if (!exists) {
-    try {
-      await knex.raw(`
-        CREATE TABLE books (
-          id UUID NOT NULL PRIMARY KEY DEFAULT uuid_generate_v4(),
-          name VARCHAR(200) NOT NULL,
-          genre VARCHAR(50) NOT NULL,
-          author_id UUID REFERENCES authors(id),
-          UNIQUE(name, author_id)
-        );
-      `);
-      console.log('books table created');
-    } catch (err) {
-      console.error(err);
-    }
+    await knex.raw(`
+      CREATE TABLE directors (
+        id SERIAL NOT NULL PRIMARY KEY,
+        name VARCHAR(200) NOT NULL,
+        age INT NOT NULL
+      );
+    `);
+    console.log('directors table created');
   }
 }
 
+async function initializeMovies(knex) {
+  const exists = await knex.schema.hasTable('movies');
+  if (!exists) {
+    await knex.raw(`
+      CREATE TABLE movies (
+        id SERIAL NOT NULL PRIMARY KEY,
+        title VARCHAR(300) NOT NULL,
+        genre VARCHAR(150) NOT NULL,
+        director_id INT NOT NULL REFERENCES directors(id),
+        UNIQUE(title, director_id)
+      );
+    `);
+    console.log('movies table created');
+  }
+}
+
+async function initializeTables(knex) {
+  await initializeDirectors(knex).catch(err => console.error(err));
+  await initializeMovies(knex).catch(err => console.error(err));
+}
+
 module.exports = {
+  knex: knexInstance,
   initializeTables,
-  knex,
 };

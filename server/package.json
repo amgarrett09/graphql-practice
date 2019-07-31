@@ -5,14 +5,14 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "NODE_ENV=development nodemon app.js"
+    "dev": "NODE_ENV=development nodemon server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "apollo-server": "^2.8.0",
     "express": "^4.17.1",
-    "express-graphql": "^0.9.0",
     "graphql": "^14.4.2",
     "knex": "^0.19.1",
     "pg": "^7.12.0"
