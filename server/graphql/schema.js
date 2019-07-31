@@ -4,7 +4,7 @@ const { knex } = require('../db');
 
 const typeDefs = gql`
   type Movie {
-    id: ID!
+    id: ID
     title: String!
     genre: String!
     directorID: ID!
@@ -12,7 +12,7 @@ const typeDefs = gql`
   }
 
   type Director {
-    id: ID!
+    id: ID
     name: String!
     age: Int!
     movies: [Movie]
