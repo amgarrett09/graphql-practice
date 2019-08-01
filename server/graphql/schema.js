@@ -1,6 +1,7 @@
 /* eslint-disable camelcase */
 const { gql } = require('apollo-server');
 const { knex } = require('../db');
+const loaders = require('./loaders');
 
 const typeDefs = gql`
   type Movie {
@@ -19,7 +20,7 @@ const typeDefs = gql`
   }
 
   type Query {
-    movie(title: String, id:ID): Movie
+    movie(title: String, id: ID): Movie
     director(name: String, id: ID): Director
     movies(page: Int!): [Movie]
     directors(page: Int!): [Director]
@@ -29,58 +30,69 @@ const typeDefs = gql`
 const resolvers = {
   Query: {
     async movie(_, args) {
+      let column;
+      let value;
+
+      if (args.id) {
+        column = 'id';
+        value = args.id;
+      } else if (args.title) {
+        column = 'title';
+        value = args.title;
+      } else {
+        return null;
+      }
+
       const result = await knex('movies')
-        .select('*')
-        .where('title', args.title)
-        .catch(() => []);
+        .select()
+        .where(column, value);
 
-      if (result.lenght === 0) return null;
+      if (result.length === 0) return null;
 
-      const {
-        id, title, genre, director_id,
-      } = result[0];
+      const record = result[0];
 
       return {
-        id,
-        title,
-        genre,
-        directorID: director_id,
+        id: record.id,
+        title: record.title,
+        genre: record.genre,
+        directorID: record.director_id,
       };
     },
     async director(_, args) {
-      if (args.name) {
-        const result = await knex
-          .select('*')
-          .from('directors')
-          .where('name', args.name)
-          .catch(() => []);
-
-        return result[0] ? result[0] : null;
-      }
+      let column;
+      let value;
 
       if (args.id) {
-        const result = await knex
-          .select('*')
-          .from('directors')
-          .where('id', args.id)
-          .catch(() => []);
-
-        return result[0] ? result[0] : null;
+        column = 'id';
+        value = args.id;
+      } else if (args.name) {
+        column = 'name';
+        value = args.name;
+      } else {
+        return null;
       }
 
-      return null;
+      const result = await knex('directors')
+        .select()
+        .where(column, value);
+
+      return result[0] ? result[0] : null;
     },
     async movies(_, args) {
       if (args.page < 1) return null;
 
-      const offset = args.page - 1;
       const result = await knex('movies')
-        .select('*')
+        .select()
         .limit(20)
-        .offset(offset * 20)
+        .offset((args.page - 1) * 20)
         .catch(() => []);
 
-      return result;
+      return result.map(obj => ({
+        id: obj.id,
+        title: obj.title,
+        genre: obj.genre,
+        directorID: obj.director_id,
+      }));
     },
     async directors(_, args) {
       if (args.page < 1) return null;
@@ -97,25 +109,14 @@ const resolvers = {
   },
   Director: {
     async movies(director) {
-      const { id } = director;
-      const result = await knex('movies')
-        .select('*')
-        .where('director_id', id)
-        .catch(() => []);
-
+      const result = await loaders.moviesByDirectorID.load(director.id);
       return result;
     },
   },
   Movie: {
     async director(movie) {
-      const result = await knex('directors')
-        .select('*')
-        .where('id', movie.directorID)
-        .catch(() => []);
-
-      if (result.length === 0) return null;
-
-      return result[0];
+      const result = await loaders.directorByID.load(movie.directorID);
+      return result;
     },
   },
 };
